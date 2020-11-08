@@ -1,0 +1,64 @@
+if [ $# -ne 3 ]; then
+    echo "incorrect number of arguments."
+    echo "usage: $0 <from_date> <to_date> <symbol>"
+    exit 1
+fi
+
+# PARSE FROM DATE AND TO DATE
+today=$(date -j -f "%H:%M:%S" "00:00:00" "+%s")
+
+from=$(date -j -f "%Y-%m-%d %H:%M:%S" "$1 00:00:00" "+%s" 2>/dev/null)
+if [ $? -ne 0 ]; then
+    echo "failed to parse date format: $1: please use %Y-%m-%d."
+    echo "usage: $0 <from_date> <to_date> <symbol>"
+    exit 1
+fi
+if [ $from -ge $today ]; then
+    echo "from date must be in the past: $1 is in the future"
+    echo "usage: $0 <from_date> <to_date> <symbol>"
+    exit 1
+fi
+
+to=$(date -j -f "%Y-%m-%d %H:%M:%S" "$2 00:00:00" "+%s" 2>/dev/null)
+if [ $? -ne 0 ]; then
+    echo "failed to parse date format: $2: please use %Y-%m-%d."
+    echo "usage: $0 <from_date> <to_date> <symbol>"
+    exit 1
+fi
+if [ $to -lt $from ]; then
+    echo "to date must after from date: $2 is before $1"
+    echo "usage: $0 <from_date> <to_date> <symbol>"
+    exit 1
+fi
+if [ $to -ge $today ]; then
+    echo "to date must be before today: $2 is in the future"
+    echo "usage: $0 <from_date> <to_date> <symbol>"
+    exit 1
+fi
+
+# CHECK RESPONSE CODE
+code=$(curl -G -s -o /dev/null -w "%{http_code}" \
+"https://query1.finance.yahoo.com/v7/finance/download/$3" \
+-d "period1=$1" \
+-d "period2=$2" \
+-d "interval=1d" \
+-d "events=history" \
+-d "includeAdjustedClose=true")
+
+if [[ ! $code =~ ^2\d\d$ ]]; then
+    echo "yahoo returned a failed response code: $code, check symbol and retry"
+    echo "usage: $0 <from_date> <to_date> <symbol>"
+    exit 1
+fi
+
+# MAKE DATA DIRECTORY
+if [ ! -d $2 ]; then mkdir $2; fi
+
+# MAKE DATA REQUEST
+curl -G -o "$2/$3" \
+"https://query1.finance.yahoo.com/v7/finance/download/$3" \
+-d "period1=$1" \
+-d "period2=$2" \
+-d "interval=1d" \
+-d "events=history" \
+-d "includeAdjustedClose=true"
