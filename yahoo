@@ -39,13 +39,13 @@ fi
 # CHECK RESPONSE CODE
 code=$(curl -G -s -o /dev/null -w "%{http_code}" \
 "https://query1.finance.yahoo.com/v7/finance/download/$3" \
--d "period1=$1" \
--d "period2=$2" \
+-d "period1=$from" \
+-d "period2=$to" \
 -d "interval=1d" \
 -d "events=history" \
 -d "includeAdjustedClose=true")
 
-if [[ ! $code =~ ^2\d\d$ ]]; then
+if [[ ! $code =~ 2[0-9]{2} ]]; then
     echo "yahoo returned a failed response code: $code, check symbol and retry"
     echo "usage: $0 <from_date> <to_date> <symbol>"
     exit 1
@@ -57,8 +57,8 @@ if [ ! -d $2 ]; then mkdir $2; fi
 # MAKE DATA REQUEST
 curl -G -o "$2/$3" \
 "https://query1.finance.yahoo.com/v7/finance/download/$3" \
--d "period1=$1" \
--d "period2=$2" \
+-d "period1=$from" \
+-d "period2=$to" \
 -d "interval=1d" \
 -d "events=history" \
 -d "includeAdjustedClose=true"
