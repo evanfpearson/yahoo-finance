@@ -1,3 +1,5 @@
+#!/bin/bash
+
 if [ $# -ne 3 ]; then
     echo "incorrect number of arguments."
     echo "usage: $0 <from_date> <to_date> <symbol>"
